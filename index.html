@@ -1,7 +1,4 @@
-<!DOCTYPE html>
-
-<html lang="en">
-<head>
+<html lang="en"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -11,7 +8,7 @@
 <meta name="color-scheme" content="dark">
 <meta name="supported-color-schemes" content="dark">
 <style>:root { color-scheme: dark; }</style>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Cormorant:ital,wght@1,300&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&amp;family=Cormorant:ital,wght@1,300&amp;display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -382,7 +379,7 @@ padding: 20px 0;
 
   <!-- OPEN -->
 
-  <div class="screen active" id="screen-open">
+  <div class="screen" id="screen-open">
     <div class="app-title">meditate</div>
     <button class="open-btn" onclick="goHome()">open</button>
   </div>
@@ -392,11 +389,11 @@ padding: 20px 0;
   <div class="screen" id="screen-home">
     <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
       <div class="preset-label">current preset</div>
-      <div class="preset-name" id="home-preset-name">—</div>
+      <div class="preset-name" id="home-preset-name">Meditation</div>
     </div>
-    <div class="swipe-dots" id="swipe-dots"></div>
-    <button class="start-btn" onclick="startTimer()" id="start-btn">
-      <svg viewBox="0 0 24 24"><polygon points="6,3 20,12 6,21"/></svg>
+    <div class="swipe-dots" id="swipe-dots"><div class="swipe-dot active"></div><div class="swipe-dot"></div><div class="swipe-dot"></div></div>
+    <button class="start-btn" onclick="startTimer()" id="start-btn" style="opacity: 1; pointer-events: auto;">
+      <svg viewBox="0 0 24 24"><polygon points="6,3 20,12 6,21"></polygon></svg>
     </button>
     <div style="display:flex;gap:24px;align-items:center;">
       <button class="manage-presets-btn" onclick="goPresets()">presets</button>
@@ -406,7 +403,7 @@ padding: 20px 0;
 
   <!-- SYNC SETTINGS -->
 
-  <div class="screen" id="screen-sync">
+  <div class="screen active fade-in" id="screen-sync">
     <div class="edit-header">
       <div class="edit-title">github sync</div>
       <button class="back-btn" onclick="goHome()">← back</button>
@@ -421,7 +418,7 @@ padding: 20px 0;
     </div>
     <button class="save-btn" onclick="saveGithubSettings()">save settings</button>
     <button class="save-btn" style="margin-top:12px;border-color:rgba(255,255,255,0.1)" onclick="pushToGithub()" id="push-btn">push latest code</button>
-    <div id="sync-status" style="font-size:11px;color:rgba(255,255,255,0.3);letter-spacing:0.2em;margin-top:8px;min-height:20px;"></div>
+    <div id="sync-status" style="font-size:11px;color:rgba(255,255,255,0.3);letter-spacing:0.2em;margin-top:8px;min-height:20px;">fetching current file...</div>
   </div>
 
   <!-- TIMER -->
@@ -975,5 +972,6 @@ if (presets.length === 0) {
 if (activePresetIdx >= presets.length) activePresetIdx = 0;
 </script>
 
-</body>
-</html>
+
+
+</body></html>
