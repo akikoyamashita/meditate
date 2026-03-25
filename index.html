@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Meditate">
+<title>Meditate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Cormorant:ital,wght@1,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+–bg: #000;
+–fg: #fff;
+–dim: rgba(255,255,255,0.3);
+–dimmer: rgba(255,255,255,0.12);
+}
+
+html, body {
+height: 100%;
+background: var(–bg);
+color: var(–fg);
+font-family: ‘Cormorant Garamond’, serif;
+font-weight: 300;
+-webkit-font-smoothing: antialiased;
+overflow: hidden;
+user-select: none;
+}
+
+#app {
+height: 100dvh;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+padding: env(safe-area-inset-top, 20px) 20px env(safe-area-inset-bottom, 20px);
+}
+
+/* ── SCREENS ── */
+.screen { display: none; width: 100%; max-width: 320px; text-align: center; }
+.screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; }
+
+/* ── OPEN SCREEN ── */
+#screen-open {
+gap: 48px;
+}
+.app-title {
+font-family: ‘Cormorant’, serif;
+font-style: italic;
+font-size: 13px;
+letter-spacing: 0.3em;
+color: var(–dim);
+text-transform: lowercase;
+}
+.open-btn {
+background: none;
+border: 1px solid rgba(255,255,255,0.2);
+color: var(–fg);
+font-family: ‘Cormorant Garamond’, serif;
+font-weight: 300;
+font-size: 13px;
+letter-spacing: 0.35em;
+text-transform: lowercase;
+padding: 14px 36px;
+cursor: pointer;
+transition: border-color 0.3s, color 0.3s;
+-webkit-tap-highlight-color: transparent;
+border-radius: 0;
+}
+.open-btn:active { border-color: rgba(255,255,255,0.6); color: rgba(255,255,255,0.6); }
+
+/* ── HOME SCREEN ── */
+#screen-home {
+gap: 40px;
+}
+.preset-label {
+font-size: 11px;
+letter-spacing: 0.3em;
+color: var(–dim);
+text-transform: lowercase;
+}
+.preset-name {
+font-family: ‘Cormorant’, serif;
+font-style: italic;
+font-size: 22px;
+font-weight: 300;
+color: var(–fg);
+margin-top: 4px;
+}
+.start-btn {
+width: 72px;
+height: 72px;
+border-radius: 50%;
+border: 1px solid rgba(255,255,255,0.25);
+background: none;
+cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: center;
+transition: border-color 0.3s;
+-webkit-tap-highlight-color: transparent;
+}
+.start-btn:active { border-color: rgba(255,255,255,0.7); }
+.start-btn svg { width: 18px; height: 18px; fill: white; opacity: 0.7; margin-left: 3px; }
+.manage-presets-btn {
+background: none;
+border: none;
+color: var(–dim);
+font-family: ‘Cormorant Garamond’, serif;
+font-size: 11px;
+letter-spacing: 0.3em;
+text-transform: lowercase;
+cursor: pointer;
+-webkit-tap-highlight-color: transparent;
+padding: 8px 0;
+}
+.manage-presets-btn:active { color: rgba(255,255,255,0.6); }
+
+/* ── TIMER SCREEN ── */
+#screen-timer {
+gap: 0;
+position: relative;
+}
+.timer-display {
+font-family: ‘Cormorant Garamond’, serif;
+font-weight: 400;
+font-size: 72px;
+letter-spacing: 0.05em;
+color: #ffffff;
+text-shadow: 0 0 40px rgba(255,255,255,0.15);
+}
+.timer-preset-name {
+font-family: ‘Cormorant’, serif;
+font-style: italic;
+font-size: 15px;
+color: rgba(255,255,255,0.55);
+margin-top: 16px;
+letter-spacing: 0.2em;
+}
+.stop-btn {
+position: absolute;
+bottom: -80px;
+background: none;
+border: none;
+color: var(–dimmer);
+font-family: ‘Cormorant Garamond’, serif;
+font-size: 11px;
+letter-spacing: 0.3em;
+text-transform: lowercase;
+cursor: pointer;
+-webkit-tap-highlight-color: transparent;
+padding: 8px;
+}
+.stop-btn:active { color: var(–dim); }
+
+/* ── PRESETS SCREEN ── */
+#screen-presets {
+gap: 28px;
+justify-content: flex-start;
+padding-top: 40px;
+max-height: 100dvh;
+overflow-y: auto;
+}
+.presets-header {
+width: 100%;
+display: flex;
+align-items: center;
+justify-content: space-between;
+}
+.presets-title {
+font-size: 11px;
+letter-spacing: 0.35em;
+color: var(–dim);
+text-transform: lowercase;
+}
+.back-btn {
+background: none;
+border: none;
+color: var(–dim);
+font-size: 11px;
+letter-spacing: 0.25em;
+font-family: ‘Cormorant Garamond’, serif;
+text-transform: lowercase;
+cursor: pointer;
+-webkit-tap-highlight-color: transparent;
+padding: 4px 0;
+}
+.preset-list { width: 100%; display: flex; flex-direction: column; gap: 0; }
+.preset-item {
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 14px 0;
+border-bottom: 1px solid rgba(255,255,255,0.07);
+cursor: pointer;
+-webkit-tap-highlight-color: transparent;
+}
+.preset-item:first-child { border-top: 1px solid rgba(255,255,255,0.07); }
+.preset-item-info { display: flex; flex-direction: column; gap: 3px; text-align: left; }
+.preset-item-name { font-size: 15px; font-weight: 300; }
+.preset-item-meta { font-size: 11px; color: var(–dim); letter-spacing: 0.1em; }
+.preset-item-actions { display: flex; gap: 16px; }
+.preset-action-btn {
+background: none;
+border: none;
+color: var(–dimmer);
+font-size: 11px;
+letter-spacing: 0.2em;
+font-family: ‘Cormorant Garamond’, serif;
+text-transform: lowercase;
+cursor: pointer;
+-webkit-tap-highlight-color: transparent;
+padding: 4px;
+}
+.preset-action-btn:active { color: var(–dim); }
+.add-preset-btn {
+background: none;
+border: 1px solid rgba(255,255,255,0.15);
+color: rgba(255,255,255,0.4);
+font-family: ‘Cormorant Garamond’, serif;
+font-weight: 300;
+font-size: 12px;
+letter-spacing: 0.3em;
+text-transform: lowercase;
+padding: 11px 24px;
+cursor: pointer;
+-webkit-tap-highlight-color: transparent;
+width: 100%;
+}
+.add-preset-btn:active { border-color: rgba(255,255,255,0.35); color: rgba(255,255,255,0.6); }
+
+/* ── EDIT PRESET SCREEN ── */
+#screen-edit {
+gap: 32px;
+justify-content: flex-start;
+padding-top: 40px;
+}
+.edit-header {
+width: 100%;
+display: flex;
+align-items: center;
+justify-content: space-between;
+}
+.edit-title {
+font-size: 11px;
+letter-spacing: 0.35em;
+color: var(–dim);
+text-transform: lowercase;
+}
+.field { width: 100%; display: flex; flex-direction: column; gap: 10px; }
+.field-label {
+font-size: 10px;
+letter-spacing: 0.4em;
+color: var(–dimmer);
+text-transform: lowercase;
+}
+.field input[type=“text”] {
+background: none;
+border: none;
+border-bottom: 1px solid rgba(255,255,255,0.15);
+color: var(–fg);
+font-family: ‘Cormorant Garamond’, serif;
+font-size: 20px;
+font-weight: 300;
+padding: 8px 0;
+outline: none;
+width: 100%;
+caret-color: white;
+}
+.field input[type=“text”]::placeholder { color: var(–dimmer); }
+.time-row { display: flex; gap: 20px; align-items: flex-end; }
+.time-unit { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+.time-unit input[type=“number”] {
+background: none;
+border: none;
+border-bottom: 1px solid rgba(255,255,255,0.15);
+color: var(–fg);
+font-family: ‘Cormorant Garamond’, serif;
+font-size: 32px;
+font-weight: 300;
+padding: 8px 0;
+outline: none;
+width: 100%;
+text-align: center;
+-moz-appearance: textfield;
+caret-color: white;
+}
+.time-unit input[type=“number”]::-webkit-inner-spin-button,
+.time-unit input[type=“number”]::-webkit-outer-spin-button { -webkit-appearance: none; }
+.time-unit-label {
+font-size: 10px;
+letter-spacing: 0.4em;
+color: var(–dimmer);
+text-transform: lowercase;
+text-align: center;
+}
+.bell-options { display: flex; flex-direction: column; gap: 0; width: 100%; }
+.bell-option {
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 13px 0;
+border-bottom: 1px solid rgba(255,255,255,0.07);
+cursor: pointer;
+-webkit-tap-highlight-color: transparent;
+}
+.bell-option:first-child { border-top: 1px solid rgba(255,255,255,0.07); }
+.bell-option-name { font-size: 15px; font-weight: 300; }
+.bell-option-check { width: 6px; height: 6px; border-radius: 50%; background: white; opacity: 0; transition: opacity 0.2s; }
+.bell-option.selected .bell-option-check { opacity: 1; }
+.bell-option-preview {
+background: none;
+border: 1px solid rgba(255,255,255,0.2);
+color: rgba(255,255,255,0.5);
+font-size: 11px;
+font-family: ‘Cormorant Garamond’, serif;
+cursor: pointer;
+-webkit-tap-highlight-color: transparent;
+padding: 6px 12px;
+border-radius: 20px;
+margin-right: 12px;
+}
+.bell-option-preview:active { border-color: rgba(255,255,255,0.6); color: white; }
+.save-btn {
+background: none;
+border: 1px solid rgba(255,255,255,0.2);
+color: rgba(255,255,255,0.6);
+font-family: ‘Cormorant Garamond’, serif;
+font-weight: 300;
+font-size: 12px;
+letter-spacing: 0.35em;
+text-transform: lowercase;
+padding: 13px 0;
+cursor: pointer;
+width: 100%;
+-webkit-tap-highlight-color: transparent;
+}
+.save-btn:active { border-color: rgba(255,255,255,0.5); }
+
+/* ── NO PRESETS STATE ── */
+.empty-state {
+font-size: 13px;
+color: var(–dimmer);
+letter-spacing: 0.1em;
+font-style: italic;
+text-align: center;
+padding: 20px 0;
+}
+
+/* fade transition */
+.fade-in { animation: fadeIn 0.4s ease forwards; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+</style>
+
+</head>
+<body>
+<div id="app">
+
+  <!-- OPEN -->
+
+  <div class="screen active" id="screen-open">
+    <div class="app-title">meditate</div>
+    <button class="open-btn" onclick="goHome()">open</button>
+  </div>
+
+  <!-- HOME -->
+
+  <div class="screen" id="screen-home">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+      <div class="preset-label">current preset</div>
+      <div class="preset-name" id="home-preset-name">—</div>
+    </div>
+    <button class="start-btn" onclick="startTimer()" id="start-btn">
+      <svg viewBox="0 0 24 24"><polygon points="6,3 20,12 6,21"/></svg>
+    </button>
+    <button class="manage-presets-btn" onclick="goPresets()">presets</button>
+  </div>
+
+  <!-- TIMER -->
+
+  <div class="screen" id="screen-timer">
+    <div class="timer-display" id="timer-display">0:00</div>
+    <div class="timer-preset-name" id="timer-preset-name"></div>
+    <button class="stop-btn" onclick="stopTimer()">stop</button>
+  </div>
+
+  <!-- PRESETS LIST -->
+
+  <div class="screen" id="screen-presets">
+    <div class="presets-header">
+      <div class="presets-title">presets</div>
+      <button class="back-btn" onclick="goHome()">← back</button>
+    </div>
+    <div class="preset-list" id="preset-list"></div>
+    <button class="add-preset-btn" onclick="newPreset()">+ new preset</button>
+  </div>
+
+  <!-- EDIT PRESET -->
+
+  <div class="screen" id="screen-edit">
+    <div class="edit-header">
+      <div class="edit-title" id="edit-title">new preset</div>
+      <button class="back-btn" onclick="goPresets()">← back</button>
+    </div>
+    <div class="field">
+      <div class="field-label">name</div>
+      <input type="text" id="edit-name" placeholder="meditation" maxlength="32">
+    </div>
+    <div class="field">
+      <div class="field-label">duration</div>
+      <div class="time-row">
+        <div class="time-unit">
+          <input type="number" id="edit-minutes" min="0" max="180" placeholder="5">
+          <div class="time-unit-label">min</div>
+        </div>
+        <div class="time-unit">
+          <input type="number" id="edit-seconds" min="0" max="59" placeholder="0">
+          <div class="time-unit-label">sec</div>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <div class="field-label">bell</div>
+      <div class="bell-options" id="bell-options"></div>
+    </div>
+    <button class="save-btn" onclick="savePreset()">save</button>
+  </div>
+
+</div>
+
+<script>
+// ── AUDIO ENGINE ──
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new AudioCtx();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+// Bell definitions: each has a layered set of oscillators
+const BELLS = {
+  'Tibetan Bowl': {
+    play(ctx) {
+      const t = ctx.currentTime;
+      const master = ctx.createGain();
+      master.gain.setValueAtTime(1.0, t);
+      master.connect(ctx.destination);
+
+      // Insight Timer style: warm ~360Hz fundamental, smooth attack, very long decay
+      const partials = [
+        [800.0, 801.8, 0.55, 16],   // fundamental with warm beating
+        [1352.0,1353.2,0.22, 12],   // inharmonic 2nd (~1.69x)
+        [2096.0,2097.0,0.12,  9],   // inharmonic 3rd (~2.62x)
+        [2968.0,2968.0,0.05,  6],   // shimmer
+        [4000.0,4000.0,0.02,  4],   // air
+      ];
+
+      partials.forEach(([f1, f2, amp, dur]) => {
+        [f1, f2].forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, t);
+          osc.frequency.exponentialRampToValueAtTime(freq * 0.9994, t + dur);
+
+          const g = ctx.createGain();
+          g.gain.setValueAtTime(0, t);
+          // Soft rounded attack — not too sharp
+          g.gain.linearRampToValueAtTime(amp * (idx === 0 ? 1 : 0.5), t + 0.025);
+          // Very smooth long decay
+          g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+
+          osc.connect(g);
+          g.connect(master);
+          osc.start(t);
+          osc.stop(t + dur + 0.1);
+        });
+      });
+
+      // Soft mallet thud — warmer and lower than before
+      const bufSize = ctx.sampleRate * 0.06;
+      const buffer = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1);
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+      const noiseFilter = ctx.createBiquadFilter();
+      noiseFilter.type = 'bandpass';
+      noiseFilter.frequency.value = 800;
+      noiseFilter.Q.value = 1.2;
+      const noiseGain = ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.12, t);
+      noiseGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
+      noise.connect(noiseFilter);
+      noiseFilter.connect(noiseGain);
+      noiseGain.connect(master);
+      noise.start(t);
+
+      // Slow gentle LFO shimmer — very subtle, like Insight Timer
+      const lfo = ctx.createOscillator();
+      lfo.frequency.setValueAtTime(5, t);
+      lfo.frequency.linearRampToValueAtTime(2.5, t + 10);
+      const lfoGain = ctx.createGain();
+      lfoGain.gain.setValueAtTime(0.04, t);
+      lfoGain.gain.exponentialRampToValueAtTime(0.001, t + 14);
+      lfo.connect(lfoGain);
+      lfoGain.connect(master.gain);
+      lfo.start(t);
+      lfo.stop(t + 17);
+    }
+  },
+  'Temple Bell': {
+    play(ctx) {
+      const t = ctx.currentTime;
+      [[330, 0.5, 3.5], [495, 0.2, 2.5], [726, 0.08, 1.5]].forEach(([freq, amp, dur]) => {
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, t);
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(amp, t + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+        osc.connect(g); g.connect(ctx.destination);
+        osc.start(t); osc.stop(t + dur);
+      });
+    }
+  },
+  'Soft Chime': {
+    play(ctx) {
+      const t = ctx.currentTime;
+      [[528, 0.3, 2], [792, 0.12, 1.5], [1056, 0.06, 1]].forEach(([freq, amp, dur]) => {
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, t);
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(amp, t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+        osc.connect(g); g.connect(ctx.destination);
+        osc.start(t); osc.stop(t + dur);
+      });
+    }
+  },
+  'Deep Gong': {
+    play(ctx) {
+      const t = ctx.currentTime;
+      [[80, 0.6, 6], [160, 0.2, 4], [240, 0.08, 3]].forEach(([freq, amp, dur]) => {
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, t);
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(amp, t + 0.04);
+        g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+        osc.connect(g); g.connect(ctx.destination);
+        osc.start(t); osc.stop(t + dur);
+      });
+    }
+  },
+  'Crystal Bowl': {
+    play(ctx) {
+      const t = ctx.currentTime;
+      [[396, 0.35, 5], [594, 0.12, 4], [990, 0.05, 2]].forEach(([freq, amp, dur]) => {
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, t);
+        osc.frequency.linearRampToValueAtTime(freq * 1.001, t + dur);
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(amp, t + 0.015);
+        g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+        osc.connect(g); g.connect(ctx.destination);
+        osc.start(t); osc.stop(t + dur);
+      });
+    }
+  }
+};
+
+const BELL_NAMES = Object.keys(BELLS);
+
+function playBell(name) {
+  try {
+    const ctx = getAudioCtx();
+    (BELLS[name] || BELLS['Tibetan Bowl']).play(ctx);
+  } catch(e) { console.warn('Bell error', e); }
+}
+
+// ── STATE ──
+let presets = JSON.parse(localStorage.getItem('med_presets') || '[]');
+let activePresetIdx = parseInt(localStorage.getItem('med_active') || '0');
+let timerInterval = null;
+let timerRemaining = 0;
+let editingIdx = null;
+
+function saveData() {
+  localStorage.setItem('med_presets', JSON.stringify(presets));
+  localStorage.setItem('med_active', String(activePresetIdx));
+}
+
+// ── NAVIGATION ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active', 'fade-in'));
+  const s = document.getElementById(id);
+  s.classList.add('active', 'fade-in');
+}
+
+function goHome() {
+  renderHomePreset();
+  showScreen('screen-home');
+}
+
+function goPresets() {
+  renderPresetList();
+  showScreen('screen-presets');
+}
+
+function renderHomePreset() {
+  const p = presets[activePresetIdx];
+  document.getElementById('home-preset-name').textContent = p ? p.name : '—';
+  document.getElementById('start-btn').style.opacity = p ? '1' : '0.3';
+  document.getElementById('start-btn').style.pointerEvents = p ? 'auto' : 'none';
+}
+
+// ── SILENT AUDIO LOOP (keeps screen awake on iOS) ──
+let silentLoop = null;
+
+function startSilentLoop() {
+  try {
+    const ctx = getAudioCtx();
+    const bufSize = ctx.sampleRate * 2; // 2 second loop
+    const buffer = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    // Leave buffer empty (silence)
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.loop = true;
+    const gainNode = ctx.createGain();
+    gainNode.gain.setValueAtTime(0.001, ctx.currentTime); // nearly silent
+    source.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    source.start();
+    silentLoop = source;
+  } catch(e) { console.warn('Silent loop error', e); }
+}
+
+function stopSilentLoop() {
+  if (silentLoop) { try { silentLoop.stop(); } catch(e) {} silentLoop = null; }
+}
+let wakeLock = null;
+
+async function requestWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLock = await navigator.wakeLock.request('screen');
+    }
+  } catch(e) { console.warn('Wake lock error', e); }
+}
+
+function releaseWakeLock() {
+  if (wakeLock) { wakeLock.release(); wakeLock = null; }
+}
+
+// Re-acquire wake lock if page becomes visible again
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && timerInterval) requestWakeLock();
+});
+
+// ── TIMER ──
+function unlockAudio() {
+  const ctx = getAudioCtx();
+  // Play a silent buffer to fully unlock audio on iOS
+  const buf = ctx.createBuffer(1, 1, ctx.sampleRate);
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  src.connect(ctx.destination);
+  src.start(0);
+}
+
+function startTimer() {
+  const p = presets[activePresetIdx];
+  if (!p) return;
+  const total = p.minutes * 60 + p.seconds;
+  if (total <= 0) return;
+
+  // Unlock AND play bell synchronously on the user gesture
+  unlockAudio();
+  playBell(p.bell);
+  requestWakeLock();
+  startSilentLoop();
+
+  timerRemaining = total;
+  document.getElementById('timer-preset-name').textContent = p.name;
+  updateTimerDisplay();
+  showScreen('screen-timer');
+
+  timerInterval = setInterval(() => {
+    timerRemaining--;
+    updateTimerDisplay();
+    if (timerRemaining <= 0) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      releaseWakeLock();
+      stopSilentLoop();
+      playBell(p.bell);
+      setTimeout(() => goHome(), 4000);
+    }
+  }, 1000);
+}
+
+function stopTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  releaseWakeLock();
+  stopSilentLoop();
+  goHome();
+}
+
+function updateTimerDisplay() {
+  const m = Math.floor(timerRemaining / 60);
+  const s = timerRemaining % 60;
+  document.getElementById('timer-display').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+}
+
+// ── PRESETS ──
+function renderPresetList() {
+  const list = document.getElementById('preset-list');
+  list.innerHTML = '';
+  if (!presets.length) {
+    list.innerHTML = '<div class="empty-state">no presets yet</div>';
+    return;
+  }
+  presets.forEach((p, i) => {
+    const item = document.createElement('div');
+    item.className = 'preset-item';
+    const isActive = i === activePresetIdx;
+    item.innerHTML = `
+      <div class="preset-item-info">
+        <div class="preset-item-name" style="opacity:${isActive?1:0.6}">${p.name}</div>
+        <div class="preset-item-meta">${p.minutes}m ${p.seconds}s · ${p.bell}</div>
+      </div>
+      <div class="preset-item-actions">
+        <button class="preset-action-btn" onclick="editPreset(${i})">edit</button>
+        <button class="preset-action-btn" onclick="deletePreset(${i})">×</button>
+      </div>
+    `;
+    item.addEventListener('click', (e) => {
+      if (e.target.classList.contains('preset-action-btn')) return;
+      activePresetIdx = i;
+      saveData();
+      renderPresetList();
+    });
+    list.appendChild(item);
+  });
+}
+
+function deletePreset(i) {
+  presets.splice(i, 1);
+  if (activePresetIdx >= presets.length) activePresetIdx = Math.max(0, presets.length - 1);
+  saveData();
+  renderPresetList();
+}
+
+function newPreset() {
+  editingIdx = null;
+  document.getElementById('edit-title').textContent = 'new preset';
+  document.getElementById('edit-name').value = '';
+  document.getElementById('edit-minutes').value = '5';
+  document.getElementById('edit-seconds').value = '0';
+  renderBellOptions('Tibetan Bowl');
+  showScreen('screen-edit');
+}
+
+function editPreset(i) {
+  editingIdx = i;
+  const p = presets[i];
+  document.getElementById('edit-title').textContent = 'edit preset';
+  document.getElementById('edit-name').value = p.name;
+  document.getElementById('edit-minutes').value = p.minutes;
+  document.getElementById('edit-seconds').value = p.seconds;
+  renderBellOptions(p.bell);
+  showScreen('screen-edit');
+}
+
+function renderBellOptions(selected) {
+  const container = document.getElementById('bell-options');
+  container.innerHTML = '';
+  BELL_NAMES.forEach(name => {
+    const div = document.createElement('div');
+    div.className = 'bell-option' + (name === selected ? ' selected' : '');
+    div.dataset.bell = name;
+    div.innerHTML = `
+      <div class="bell-option-name">${name}</div>
+      <div style="display:flex;align-items:center">
+        <button class="bell-option-preview" onclick="event.stopPropagation();previewBell('${name}')">▷</button>
+        <div class="bell-option-check"></div>
+      </div>
+    `;
+    div.addEventListener('click', () => {
+      document.querySelectorAll('.bell-option').forEach(b => b.classList.remove('selected'));
+      div.classList.add('selected');
+    });
+    container.appendChild(div);
+  });
+}
+
+function previewBell(name) {
+  unlockAudio();
+  playBell(name);
+}
+
+function savePreset() {
+  const name = document.getElementById('edit-name').value.trim() || 'Untitled';
+  const minutes = Math.max(0, parseInt(document.getElementById('edit-minutes').value) || 0);
+  const seconds = Math.min(59, Math.max(0, parseInt(document.getElementById('edit-seconds').value) || 0));
+  const selectedBell = document.querySelector('.bell-option.selected');
+  const bell = selectedBell ? selectedBell.dataset.bell : 'Tibetan Bowl';
+
+  const preset = { name, minutes, seconds, bell };
+  if (editingIdx !== null) {
+    presets[editingIdx] = preset;
+  } else {
+    presets.push(preset);
+    activePresetIdx = presets.length - 1;
+  }
+  saveData();
+  goPresets();
+}
+
+// ── INIT ──
+if (presets.length === 0) {
+  // seed a default
+  presets.push({ name: 'Meditation', minutes: 0, seconds: 10, bell: 'Tibetan Bowl' });
+  saveData();
+}
+if (activePresetIdx >= presets.length) activePresetIdx = 0;
+</script>
+
+</body>
+</html>
