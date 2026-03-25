@@ -660,20 +660,25 @@ function renderHomePreset() {
 
 // ── SWIPE TO CHANGE PRESET ──
 let touchStartX = 0;
-document.getElementById('screen-home').addEventListener('touchstart', e => {
+let touchStartY = 0;
+
+document.addEventListener('touchstart', e => {
   touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
 }, { passive: true });
 
-document.getElementById('screen-home').addEventListener('touchend', e => {
+document.addEventListener('touchend', e => {
+  // Only on home screen
+  if (!document.getElementById('screen-home').classList.contains('active')) return;
   const dx = e.changedTouches[0].clientX - touchStartX;
-  if (Math.abs(dx) < 40) return; // ignore small movements
+  const dy = e.changedTouches[0].clientY - touchStartY;
+  // Make sure it's a horizontal swipe, not a scroll
+  if (Math.abs(dx) < 40 || Math.abs(dy) > Math.abs(dx)) return;
   if (dx < 0 && activePresetIdx < presets.length - 1) {
-    // swipe left → next preset
     activePresetIdx++;
     saveData();
     renderHomePreset();
   } else if (dx > 0 && activePresetIdx > 0) {
-    // swipe right → previous preset
     activePresetIdx--;
     saveData();
     renderHomePreset();
