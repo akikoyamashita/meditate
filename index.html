@@ -398,7 +398,30 @@ padding: 20px 0;
     <button class="start-btn" onclick="startTimer()" id="start-btn">
       <svg viewBox="0 0 24 24"><polygon points="6,3 20,12 6,21"/></svg>
     </button>
-    <button class="manage-presets-btn" onclick="goPresets()">presets</button>
+    <div style="display:flex;gap:24px;align-items:center;">
+      <button class="manage-presets-btn" onclick="goPresets()">presets</button>
+      <button class="manage-presets-btn" onclick="goSync()" id="sync-btn">↑ sync</button>
+    </div>
+  </div>
+
+  <!-- SYNC SETTINGS -->
+
+  <div class="screen" id="screen-sync">
+    <div class="edit-header">
+      <div class="edit-title">github sync</div>
+      <button class="back-btn" onclick="goHome()">← back</button>
+    </div>
+    <div class="field">
+      <div class="field-label">github token</div>
+      <input type="password" id="sync-token" placeholder="ghp_..." style="background:none;border:none;border-bottom:1px solid rgba(255,255,255,0.15);color:#fff;font-family:'Cormorant Garamond',serif;font-size:16px;padding:8px 0;outline:none;width:100%;caret-color:white;">
+    </div>
+    <div class="field">
+      <div class="field-label">repo (username/reponame)</div>
+      <input type="text" id="sync-repo" placeholder="akikoyamashita/meditate" style="background:none;border:none;border-bottom:1px solid rgba(255,255,255,0.15);color:#fff;font-family:'Cormorant Garamond',serif;font-size:16px;padding:8px 0;outline:none;width:100%;caret-color:white;">
+    </div>
+    <button class="save-btn" onclick="saveGithubSettings()">save settings</button>
+    <button class="save-btn" style="margin-top:12px;border-color:rgba(255,255,255,0.1)" onclick="pushToGithub()" id="push-btn">push latest code</button>
+    <div id="sync-status" style="font-size:11px;color:rgba(255,255,255,0.3);letter-spacing:0.2em;margin-top:8px;min-height:20px;"></div>
   </div>
 
   <!-- TIMER -->
@@ -635,7 +658,61 @@ function goHome() {
   showScreen('screen-home');
 }
 
-function goPresets() {
+function goSync() {
+  const token = localStorage.getItem('gh_token') || '';
+  const repo = localStorage.getItem('gh_repo') || 'akikoyamashita/meditate';
+  document.getElementById('sync-token').value = token;
+  document.getElementById('sync-repo').value = repo;
+  document.getElementById('sync-status').textContent = '';
+  showScreen('screen-sync');
+}
+
+function saveGithubSettings() {
+  localStorage.setItem('gh_token', document.getElementById('sync-token').value.trim());
+  localStorage.setItem('gh_repo', document.getElementById('sync-repo').value.trim());
+  document.getElementById('sync-status').textContent = 'settings saved';
+}
+
+async function pushToGithub() {
+  const token = localStorage.getItem('gh_token');
+  const repo = localStorage.getItem('gh_repo') || 'akikoyamashita/meditate';
+  const statusEl = document.getElementById('sync-status');
+
+  if (!token) { statusEl.textContent = 'please enter your github token first'; return; }
+
+  statusEl.textContent = 'fetching current file...';
+
+  try {
+    // Get current file SHA (required for update)
+    const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/index.html`, {
+      headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+    });
+    const getData = await getRes.json();
+    const sha = getData.sha;
+
+    // Get the latest code from this page
+    const code = document.documentElement.outerHTML;
+    const encoded = btoa(unescape(encodeURIComponent(code)));
+
+    statusEl.textContent = 'pushing to github...';
+
+    // Push update
+    const pushRes = await fetch(`https://api.github.com/repos/${repo}/contents/index.html`, {
+      method: 'PUT',
+      headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'update from app', content: encoded, sha })
+    });
+
+    if (pushRes.ok) {
+      statusEl.textContent = '✓ pushed! live in ~1 min';
+    } else {
+      const err = await pushRes.json();
+      statusEl.textContent = 'error: ' + (err.message || 'unknown');
+    }
+  } catch(e) {
+    statusEl.textContent = 'error: ' + e.message;
+  }
+}
   renderPresetList();
   showScreen('screen-presets');
 }
@@ -662,17 +739,16 @@ function renderHomePreset() {
 let touchStartX = 0;
 let touchStartY = 0;
 
-document.addEventListener('touchstart', e => {
-  touchStartX = e.touches[0].clientX;
-  touchStartY = e.touches[0].clientY;
-}, { passive: true });
+document.addEventListener('pointerdown', e => {
+  touchStartX = e.clientX;
+  touchStartY = e.clientY;
+});
 
-document.addEventListener('touchend', e => {
-  // Only on home screen
+document.addEventListener('pointerup', e => {
   if (!document.getElementById('screen-home').classList.contains('active')) return;
-  const dx = e.changedTouches[0].clientX - touchStartX;
-  const dy = e.changedTouches[0].clientY - touchStartY;
-  // Make sure it's a horizontal swipe, not a scroll
+  const dx = e.clientX - touchStartX;
+  const dy = e.clientY - touchStartY;
+  alert('dx: ' + Math.round(dx) + ' dy: ' + Math.round(dy) + ' presets: ' + presets.length);
   if (Math.abs(dx) < 40 || Math.abs(dy) > Math.abs(dx)) return;
   if (dx < 0 && activePresetIdx < presets.length - 1) {
     activePresetIdx++;
@@ -683,7 +759,7 @@ document.addEventListener('touchend', e => {
     saveData();
     renderHomePreset();
   }
-}, { passive: true });
+});
 
 // ── SILENT AUDIO LOOP (keeps screen awake on iOS) ──
 let silentLoop = null;
