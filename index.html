@@ -343,7 +343,25 @@ width: 100%;
 }
 .save-btn:active { border-color: rgba(255,255,255,0.5); }
 
-/* ── NO PRESETS STATE ── */
+/* ── SWIPE DOTS ── */
+.swipe-dots {
+display: flex;
+gap: 6px;
+align-items: center;
+justify-content: center;
+}
+.swipe-dot {
+width: 4px;
+height: 4px;
+border-radius: 50%;
+background: rgba(255,255,255,0.2);
+transition: background 0.2s, transform 0.2s;
+}
+.swipe-dot.active {
+background: rgba(255,255,255,0.7);
+transform: scale(1.3);
+}
+.preset-name { transition: opacity 0.2s; }
 .empty-state {
 font-size: 13px;
 color: var(–dimmer);
@@ -376,6 +394,7 @@ padding: 20px 0;
       <div class="preset-label">current preset</div>
       <div class="preset-name" id="home-preset-name">—</div>
     </div>
+    <div class="swipe-dots" id="swipe-dots"></div>
     <button class="start-btn" onclick="startTimer()" id="start-btn">
       <svg viewBox="0 0 24 24"><polygon points="6,3 20,12 6,21"/></svg>
     </button>
@@ -626,7 +645,40 @@ function renderHomePreset() {
   document.getElementById('home-preset-name').textContent = p ? p.name : '—';
   document.getElementById('start-btn').style.opacity = p ? '1' : '0.3';
   document.getElementById('start-btn').style.pointerEvents = p ? 'auto' : 'none';
+
+  // Render dots
+  const dotsEl = document.getElementById('swipe-dots');
+  dotsEl.innerHTML = '';
+  if (presets.length > 1) {
+    presets.forEach((_, i) => {
+      const dot = document.createElement('div');
+      dot.className = 'swipe-dot' + (i === activePresetIdx ? ' active' : '');
+      dotsEl.appendChild(dot);
+    });
+  }
 }
+
+// ── SWIPE TO CHANGE PRESET ──
+let touchStartX = 0;
+document.getElementById('screen-home').addEventListener('touchstart', e => {
+  touchStartX = e.touches[0].clientX;
+}, { passive: true });
+
+document.getElementById('screen-home').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if (Math.abs(dx) < 40) return; // ignore small movements
+  if (dx < 0 && activePresetIdx < presets.length - 1) {
+    // swipe left → next preset
+    activePresetIdx++;
+    saveData();
+    renderHomePreset();
+  } else if (dx > 0 && activePresetIdx > 0) {
+    // swipe right → previous preset
+    activePresetIdx--;
+    saveData();
+    renderHomePreset();
+  }
+}, { passive: true });
 
 // ── SILENT AUDIO LOOP (keeps screen awake on iOS) ──
 let silentLoop = null;
