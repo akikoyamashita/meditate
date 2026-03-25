@@ -713,6 +713,8 @@ async function pushToGithub() {
     statusEl.textContent = 'error: ' + e.message;
   }
 }
+
+function goPresets() {
   renderPresetList();
   showScreen('screen-presets');
 }
